@@ -3,9 +3,6 @@
 Face recognition service using DeepFace for generating and comparing face embeddings.
 This handles the core face recognition logic for both registration and attendance.
 
-Expo Go Connection:
-- Your frontend will send images to API endpoints which call these functions
-- No direct connection from Expo Go to this file
 """
 
 from deepface import DeepFace

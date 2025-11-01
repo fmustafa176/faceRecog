@@ -9,17 +9,18 @@ Expo Go Connection:
 """
 
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
 import os
 import tempfile
 from datetime import datetime
 from typing import List, Optional
+from fastapi.middleware.cors import CORSMiddleware
 
 # Import our services
 from database import MongoDB
 from face_service import FaceService
+
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -31,16 +32,10 @@ app = FastAPI(
 # CORS middleware - CRITICAL for Expo Go
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # React dev server
-        "http://localhost:19006", # Expo web
-        "exp://*",               # Expo apps
-        "http://*",              # All HTTP origins
-        "https://*",             # All HTTPS origins
-    ],
+    allow_origins=["*"],  # Allow all origins
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods (GET, POST, etc.)
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],   # Allow all methods
+    allow_headers=["*"],   # Allow all headers
 )
 
 # Initialize services
@@ -59,6 +54,10 @@ async def root():
         "service": "Face Recognition Attendance API",
         "timestamp": datetime.now().isoformat()
     }
+
+@app.get("/test")
+async def test_endpoint():
+    return {"message": "Backend is working!", "status": "ok"}
 
 @app.get("/health")
 async def health_check():
@@ -410,13 +409,40 @@ async def not_found_handler(request, exc):
         content={"success": False, "error": "Endpoint not found"}
     )
 
+
+@app.post("/check-face")
+async def check_face(image: UploadFile = File(...)):
+    """Simple endpoint to check if face exists in database"""
+    temp_path = None
+    try:
+        # Save uploaded image temporarily
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+        content = await image.read()
+        temp_file.write(content)
+        temp_file.close()
+        temp_path = temp_file.name
+        
+        # Use existing face verification
+        result = face_service.verify_face(temp_path)
+        
+        # Cleanup
+        if temp_path and os.path.exists(temp_path):
+            os.unlink(temp_path)
+        
+        return result
+        
+    except Exception as e:
+        if temp_path and os.path.exists(temp_path):
+            os.unlink(temp_path)
+        return {"success": False, "error": str(e)}
+
 if __name__ == "__main__":
     print("🚀 Starting Face Recognition Attendance API Server...")
     print("📱 Expo Go can connect to: http://localhost:8000")
     print("📚 API Documentation: http://localhost:8000/docs")
     
     uvicorn.run(
-        app,  # Change this line
+        'app:app',  # Change this line
         host="0.0.0.0",
         port=8000,
         reload=False

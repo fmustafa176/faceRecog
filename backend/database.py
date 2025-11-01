@@ -14,6 +14,12 @@ import numpy as np
 from bson.binary import Binary
 import pickle
 from typing import List, Dict, Any, Optional
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+mongo_url = os.getenv("MONGO_URL")
+
 
 class MongoDB:
     def __init__(self, connection_string: str = None, db_name: str = "attendance_system"): # type: ignore
@@ -25,7 +31,7 @@ class MongoDB:
         - For local development, use "mongodb://localhost:27017/"
         """
         if connection_string is None:
-            connection_string = "mongodb+srv://faizanmustafa158:c6UCSPEsXn5S78Qf@cluster0.4lsb2.mongodb.net/"
+            connection_string = mongo_url
         self.client = MongoClient(connection_string)
         self.db = self.client[db_name]
         self.students = self.db.students
@@ -191,6 +197,4 @@ class MongoDB:
         self.client.close()
 
 
-# Singleton instance for easy import
-# Expo Go Note: You'll need to initialize this with your MongoDB connection string
 db = MongoDB()

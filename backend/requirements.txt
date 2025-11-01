@@ -17,3 +17,4 @@
 pymongo
 fastapi
 uvicorn
+dotenv
